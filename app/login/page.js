@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [idOrEmail, setIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -15,13 +15,28 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    let email = idOrEmail.trim();
+    // if it doesn't look like an email, treat it as a customer number
+    if (!email.includes('@')) {
+      const res = await fetch('/api/customer-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer_number: email }),
+      });
+      if (!res.ok) {
+        setLoading(false);
+        setError('Customer number not found');
+        return;
+      }
+      const json = await res.json();
+      email = json.email;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push('/products');
-    }
+    if (error) setError(error.message);
+    else router.push('/products');
   }
 
   return (
@@ -30,10 +45,9 @@ export default function LoginPage() {
         <h1 className="text-2xl font-semibold text-center text-black">Gala Drinks — Login</h1>
         <input
           className="w-full border rounded-xl p-3"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
+          placeholder="Customer number (e.g. 000001) or Email"
+          value={idOrEmail}
+          onChange={e => setIdOrEmail(e.target.value)}
           required
         />
         <input
