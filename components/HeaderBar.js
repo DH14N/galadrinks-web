@@ -13,7 +13,7 @@ export default function HeaderBar({
     <header className="w-full border-b border-gray-200 shadow-sm bg-white">
       {/* Top bar */}
       <div className="flex justify-between items-center bg-gray-100 text-sm px-6 py-2">
-        <div className="text-black">📞 0116 296 1537</div>
+        <div className="text-black">📞 0116 2890111</div>
         <div className="flex space-x-4 text-black">
           <Link href="/help">Help</Link>
           <Link href="/about">About Us</Link>

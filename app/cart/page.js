@@ -24,7 +24,7 @@ export default function CartPage() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
-        router.replace('/login');
+        router.replace('/trade-login');
         return;
       }
       loadCart();
@@ -83,14 +83,14 @@ export default function CartPage() {
     setItems([]);
     setPlacing(false);
     alert('Order placed!'); // later we’ll add an orders page
-    router.replace('/products');
+    router.replace('/trade/products');
   }
 
   return (
     <main className="min-h-screen p-6 bg-white text-black">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Your Cart</h1>
-        <Link href="/products" className="rounded-xl px-4 py-2 border">Continue shopping</Link>
+        <Link href="/trade/products" className="rounded-xl px-4 py-2 border">Continue shopping</Link>
       </div>
 
       {items.length === 0 ? (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import HeaderBar from '@/components/HeaderBar';
 
+
 export default function ProductsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -38,7 +39,7 @@ export default function ProductsPage() {
 
       // require session
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) { router.replace('/login'); return; }
+      if (!sessionData.session) { router.replace('/trade-login'); return; }
 
       // products allowed by RLS
       const { data: prods, error: prodErr } = await supabase
@@ -87,7 +88,7 @@ export default function ProductsPage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.replace('/login');
+    router.replace('/trade-login');
   }
 
   function addToCart(p) {

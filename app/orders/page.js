@@ -15,7 +15,7 @@ export default function OrdersPage() {
   useEffect(() => {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) { router.replace('/login'); return; }
+      if (!sess.session) { router.replace('/trade-login'); return; }
 
       // 1) load this customer's orders (RLS: only theirs)
       const { data: ordersRes, error: oErr } = await supabase
@@ -58,7 +58,7 @@ export default function OrdersPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Your Orders</h1>
         <div className="flex gap-3">
-          <Link href="/products" className="rounded-xl px-4 py-2 border">Products</Link>
+          <Link href="/trade/products" className="rounded-xl px-4 py-2 border">Products</Link>
           <Link href="/cart" className="rounded-xl px-4 py-2 border">Cart</Link>
         </div>
       </div>

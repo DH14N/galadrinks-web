@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ---------------------------------------------------------------------------
+   Gala Drinks design system — v2 (light, Libra-style)
+   Warm white pages, deep navy panels, refined gold accents.
+   Tokens become Tailwind utilities: bg-paper, text-ink, border-line, etc.
+--------------------------------------------------------------------------- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Page + section backgrounds */
+  --color-paper: #fbfaf7;      /* main page background (warm white) */
+  --color-paper-2: #f3efe7;    /* alternate section background (cream) */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Text */
+  --color-ink: #17202f;        /* headings + strong text */
+  --color-body: #5a6474;       /* body / muted text */
+
+  /* Dark panels (hero, footer) */
+  --color-navy: #101c33;
+  --color-navy-700: #1a2c4d;
+  --color-navy-600: #24395f;
+
+  /* Accent */
+  --color-gold: #a87c24;       /* readable gold on white */
+  --color-gold-light: #d9a441; /* brighter gold for dark panels */
+  --color-gold-pale: #f3e7cd;  /* gold tint backgrounds */
+
+  /* Borders */
+  --color-line: #e8e3d7;             /* on light backgrounds */
+  --color-line-dark: rgba(255, 255, 255, 0.14); /* on navy panels */
+
+  /* Fonts (wired up in app/layout.js) */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+::selection {
+  background: var(--color-gold);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reusable helpers                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Standard white card on light sections */
+.card {
+  background: #ffffff;
+  border: 1px solid var(--color-line);
+  box-shadow: 0 1px 2px rgba(23, 32, 47, 0.05);
+}
+
+/* Frosted panel — only used on the dark navy sections */
+.glass {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations                                                          */
+/* ------------------------------------------------------------------ */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+@keyframes glow-pan {
+  0% { transform: translate(-8%, -4%) scale(1); }
+  50% { transform: translate(6%, 5%) scale(1.1); }
+  100% { transform: translate(-8%, -4%) scale(1); }
+}
+.animate-glow-pan { animation: glow-pan 18s ease-in-out infinite; }

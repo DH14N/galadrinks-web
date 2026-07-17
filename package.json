@@ -9,8 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^138.0.2",
     "@supabase/supabase-js": "^2.55.0",
+    "framer-motion": "^12.42.2",
+    "lucide-react": "^1.24.0",
     "next": "15.5.0",
+    "puppeteer-core": "^24.17.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
