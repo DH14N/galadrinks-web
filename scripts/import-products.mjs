@@ -87,12 +87,15 @@ function extractAbv(title, description, tags) {
       if (n > 0 && n <= 96) return `${m[1]}%`;
     }
   }
-  // A bare percentage is only trusted in the TITLE, and not when it's
-  // part of "% extra / % off / % less" style offers
-  const m = (title || "").match(/(\d{1,2}(?:\.\d{1,2})?)\s*%(?!\s*(?:extra|off|fewer|less|free|more|juice|recycled))/i);
-  if (m) {
-    const n = parseFloat(m[1]);
-    if (n > 0 && n <= 96) return `${m[1]}%`;
+  // A bare percentage is trusted in the TITLE or the TAGS (shops often
+  // tag beers "2.8%"), but not in descriptions ("88% juice"), and not
+  // when it's part of "% extra / % off" style offers
+  for (const text of [title, tags]) {
+    const m = (text || "").match(/(\d{1,2}(?:\.\d{1,2})?)\s*%(?!\s*(?:extra|off|fewer|less|free|more|juice|recycled))/i);
+    if (m) {
+      const n = parseFloat(m[1]);
+      if (n > 0 && n <= 96) return `${m[1]}%`;
+    }
   }
   return "";
 }
@@ -354,8 +357,13 @@ function inferCountry(brandSlug, text) {
 
 // ------------------------------------------------------ category mapping
 // Checked in order — first match wins.
+// No/low alcohol is a FLAG, not a home category: a 0.0% lager stays in
+// Lagers (so the alcohol-free strength filter works there) AND appears
+// in the No & Low range. Only products with no other category land in
+// no-low-alcohol itself.
+const NOLOW_RE = /alcohol[- ]free|alcohol-?free|non[- ]?alcoholic|de[- ]alcohol|lyre'?s|low alcohol|\b0\.[05]\s?%|\b0[.,]0\b/i;
+
 const CATEGORY_RULES = [
-  ["no-low-alcohol", /alcohol[- ]free|non[- ]alcoholic|de[- ]alcohol|0\.0%/],
   ["kegs", /\bkegs?\b|perfect draft|perfectdraft/],
   ["miniatures", /miniature|minature|\b5cl\b/],
   ["gift-sets", /gift ?set|giftset|hamper|gift box|advent calendar/],
@@ -367,7 +375,7 @@ const CATEGORY_RULES = [
   ["cider", /cider|perry\b/],
   ["rtds", /pre[- ]?mix(ed)?|ready to drink|\brtd\b|hard seltzer|seltzer|alcopop|cocktail in a|canned cocktail|\bcocktail\b/],
   ["liqueurs-speciality", /liqueur|schnapps|sambuca|amaretto|aperitivo|aperol|cream liqueur|absinthe|bitters\b|pastis|ouzo|limoncello|advocaat|triple sec|curacao|cassis|campari|baileys|soplica|pimm'?s\b|cactus jack|\bshots?\b/],
-  ["spirits", /\bgin\b|vodka|whisky|whiskey|scotch|bourbon|\brum\b|tequila|mezcal|cognac|brandy|armagnac|calvados|grappa|\bspirit\b|soju|arak|raki|cachaca|cachaça|pisco|lubelska|\brye\b|single barrel|\balcohol\b/],
+  ["spirits", /\bgin\b|vodka|whisky|whiskey|scotch|bourbon|\brum\b|tequila|mezcal|cognac|brandy|armagnac|calvados|grappa|\bspirit\b|soju|arak|raki|cachaca|cachaça|pisco|lubelska|\brye\b|single barrel|\balcohol\b(?![- ]?free)/],
   ["hot-beverages", /horlicks|ovaltine/],
   ["energy-drinks", /energy drink|\benergy\b|red bull|monster|relentless|rockstar|lucozade|prime hydration/],
   ["hot-beverages", /coffee|\btea\b|hot chocolate|cappuccino|espresso/],
@@ -409,7 +417,6 @@ const BRAND_CATEGORIES = {
 const NAME_OVERRIDES = [
   // Kegs first — a keg is a keg even when its shop Type just says "Beer"
   ["kegs", /\bkegs?\b|perfect ?draft|brewlock|draught ?master/i],
-  ["no-low-alcohol", /lyre'?s|non[- ]?alcoholic|alcohol[- ]free|low alcohol|\b0\.[05]\s?%|\b0[.,]0\b/i],
   ["rtds", /dragon soop|four loko|\bhooch\b|alcoholic ginger beer|alcoholic beverage|\bvk\b|smirnoff ice/i],
   // (miniatures are excluded so a 5cl Baileys still counts as a miniature)
   ["liqueurs-speciality", /(baileys|soplica|jeeves punch|schnapps)(?!.*(miniature|minature|\b5cl\b))/i],
@@ -518,14 +525,20 @@ for (const file of FILES) {
     }
     const brandSlug = slugify(vendor);
 
-    const category = mapCategory(type, tags, title, brandSlug);
-    if (!category) {
-      unmapped.set(type || "(no type)", (unmapped.get(type || "(no type)") || 0) + 1);
-    }
-
     const sizeText = `${title} ${description}`;
     const sizes = extractSizes(sizeText);
-    const abv = extractAbv(title, description, tags);
+    let abv = extractAbv(title, description, tags);
+
+    // No/low flag: matched by wording, but never on something clearly
+    // alcoholic (a 5% drink with a noisy "alcohol free" tag stays put)
+    let isNoLow = NOLOW_RE.test(`${type} ${title} ${tags}`);
+    if (isNoLow && abv && parseFloat(abv) > 0.5) isNoLow = false;
+    if (isNoLow && !abv) abv = "0.0%";
+
+    const category = mapCategory(type, tags, title, brandSlug);
+    if (!category && !isNoLow) {
+      unmapped.set(type || "(no type)", (unmapped.get(type || "(no type)") || 0) + 1);
+    }
     const barcode = get(r, "Variant Barcode").replace(/^'+/, "");
     const sku = get(r, "Variant SKU").replace(/^'+/, "");
 
@@ -542,13 +555,15 @@ for (const file of FILES) {
       tags,
       get(r, "Dietary preferences (product.metafields.shopify.dietary-preferences)")
     );
+    if (isNoLow) specs.push("No & Low Alcohol");
 
     const prod = {
       slug: handle,
       name: title,
       brand: vendor,
       brandSlug,
-      category: category || "bar-supplies",
+      category: category || (isNoLow ? "no-low-alcohol" : "bar-supplies"),
+      nolow: isNoLow || undefined,
       pack_size: sizes.pack_size,
       unit_size: sizes.unit_size,
       case_size: sizes.case_size,
