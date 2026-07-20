@@ -13,7 +13,7 @@
     "@supabase/supabase-js": "^2.55.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.24.0",
-    "next": "15.5.0",
+    "next": "^15.5.20",
     "puppeteer-core": "^24.17.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -22,7 +22,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "15.5.0",
+    "eslint-config-next": "^15.5.20",
     "tailwindcss": "^4"
   }
 }
