@@ -9,7 +9,7 @@ import Reveal from "@/components/Reveal";
 import CategoryTile from "@/components/CategoryTile";
 import ProductGrid from "@/components/ProductGrid";
 import PremiumButton from "@/components/PremiumButton";
-import { categories, getFeaturedProducts, getShowcaseProducts } from "@/lib/catalogue";
+import { categories, getFeaturedProducts, getShowcaseProducts, getCategoryImages } from "@/lib/catalogue";
 
 // Small helper for consistent section headings
 function SectionHeading({ eyebrow, title, sub }) {
@@ -29,6 +29,7 @@ function SectionHeading({ eyebrow, title, sub }) {
 export default function HomePage() {
   const featured = getFeaturedProducts();
   const showcase = getShowcaseProducts();
+  const categoryImages = getCategoryImages();
 
   return (
     <>
@@ -107,7 +108,7 @@ export default function HomePage() {
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {categories.map((c, i) => (
               <Reveal key={c.slug} delay={Math.min(i * 0.05, 0.35)} className="h-full">
-                <CategoryTile category={c} />
+                <CategoryTile category={c} image={categoryImages[c.slug]} />
               </Reveal>
             ))}
           </div>

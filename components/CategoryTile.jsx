@@ -24,7 +24,7 @@ const icons = {
   gift: Gift,
 };
 
-export default function CategoryTile({ category }) {
+export default function CategoryTile({ category, image }) {
   const Icon = icons[category.icon] || Beer;
 
   return (
@@ -34,9 +34,22 @@ export default function CategoryTile({ category }) {
       href={`/category/${category.slug}`}
       className="group card flex h-full flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-lg"
     >
-      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gold-pale text-gold transition-transform duration-300 group-hover:scale-110">
-        <Icon size={22} strokeWidth={1.8} />
-      </div>
+      {image ? (
+        // Product photo sits on a cream tile so white bottle shots read
+        <span className="mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-line bg-paper-2 p-1.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={image}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+          />
+        </span>
+      ) : (
+        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gold-pale text-gold transition-transform duration-300 group-hover:scale-110">
+          <Icon size={22} strokeWidth={1.8} />
+        </div>
+      )}
 
       <h3 className="font-display text-lg font-semibold text-ink">
         {category.name}
