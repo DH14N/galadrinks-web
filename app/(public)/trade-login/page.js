@@ -20,7 +20,7 @@ export default function TradeLoginPage() {
   return (
     <div className="relative overflow-hidden">
       {/* ambient glow */}
-      <div className="relative mx-auto grid min-h-screen max-w-6xl items-center gap-14 px-4 pb-24 pt-[130px] sm:px-6 lg:grid-cols-2">
+      <div className="relative mx-auto grid min-h-screen max-w-6xl items-center gap-14 px-4 pb-24 pt-[150px] sm:px-6 lg:grid-cols-2">
         {/* Left: pitch */}
         <Reveal className="hidden lg:block">
           <div className="text-[12px] font-semibold uppercase tracking-[0.25em] text-gold">

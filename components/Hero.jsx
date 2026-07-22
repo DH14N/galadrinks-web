@@ -17,9 +17,39 @@ function FloatCard({ children, className = "", duration = 6, delay = 0 }) {
   );
 }
 
-export default function Hero() {
+export default function Hero({ showcase = {} }) {
+  const ranges = [
+    {
+      icon: Beer,
+      big: "600+ beers, ciders & kegs",
+      small: "World lagers, craft, cask and draught",
+      product: showcase.beers,
+      offset: "lg:ml-0",
+      duration: 7,
+      delay: 0,
+    },
+    {
+      icon: Martini,
+      big: "1,400+ spirits & liqueurs",
+      small: "From back-bar staples to rare bottles",
+      product: showcase.spirits,
+      offset: "lg:ml-12",
+      duration: 8,
+      delay: 0.5,
+    },
+    {
+      icon: Wine,
+      big: "450+ wines & champagne",
+      small: "House pours to celebration fizz",
+      product: showcase.wines,
+      offset: "lg:ml-3",
+      duration: 7.5,
+      delay: 1,
+    },
+  ];
+
   return (
-    <section className="relative overflow-hidden bg-navy pt-[104px] text-white">
+    <section className="relative overflow-hidden bg-navy pt-[124px] text-white">
       {/* One soft gold glow — kept subtle */}
       <div className="pointer-events-none absolute inset-0">
         <div className="animate-glow-pan absolute -top-32 right-0 h-[480px] w-[480px] rounded-full bg-gold-light/10 blur-[130px]" />
@@ -97,29 +127,37 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, delay: 0.3 }}
-          className="relative mx-auto hidden w-full max-w-[400px] sm:block"
+          className="relative mx-auto hidden w-full max-w-[460px] sm:block"
         >
           {/* soft glow behind the stack */}
-          <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold-light/10 blur-[90px]" />
+          <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold-light/10 blur-[90px]" />
 
-          <div className="relative space-y-5">
-            {[
-              { icon: Beer, big: "600+ beers, ciders & kegs", small: "World lagers, craft, cask and draught", offset: "ml-0", duration: 7, delay: 0 },
-              { icon: Martini, big: "1,400+ spirits & liqueurs", small: "From back-bar staples to rare bottles", offset: "ml-10", duration: 8, delay: 0.5 },
-              { icon: Wine, big: "450+ wines & champagne", small: "House pours to celebration fizz", offset: "ml-2", duration: 7.5, delay: 1 },
-            ].map(({ icon: Icon, big, small, offset, duration, delay }) => (
+          <div className="relative space-y-6">
+            {ranges.map(({ icon: Icon, big, small, product, offset, duration, delay }) => (
               <FloatCard
                 key={big}
                 duration={duration}
                 delay={delay}
-                className={`flex items-center gap-4 p-5 ${offset}`}
+                className={`flex items-center gap-5 p-6 ${offset}`}
               >
-                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gold-light/15 text-gold-light">
-                  <Icon size={22} strokeWidth={1.6} />
-                </span>
+                {/* Product photo on a white tile, or an icon fallback */}
+                {product?.image ? (
+                  <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </span>
+                ) : (
+                  <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gold-light/15 text-gold-light">
+                    <Icon size={28} strokeWidth={1.6} />
+                  </span>
+                )}
                 <span>
-                  <span className="block font-display text-base font-semibold">{big}</span>
-                  <span className="mt-0.5 block text-[13px] text-white/60">{small}</span>
+                  <span className="block font-display text-lg font-semibold leading-snug">{big}</span>
+                  <span className="mt-1 block text-sm text-white/60">{small}</span>
                 </span>
               </FloatCard>
             ))}

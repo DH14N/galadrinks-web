@@ -57,7 +57,7 @@ export default async function ProductsPage({ searchParams }) {
     "rounded-full border border-line bg-white px-4 py-2 text-[13px] text-body transition-colors hover:border-gold hover:text-gold";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[172px] sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[192px] sm:px-6">
       {/* Page heading — centred */}
       <Reveal className="mx-auto max-w-2xl text-center">
         <div className="text-[12px] font-semibold uppercase tracking-[0.25em] text-gold">

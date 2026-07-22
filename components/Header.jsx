@@ -72,16 +72,16 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-4 border-b border-line px-4 sm:px-6">
+      <div className="mx-auto flex h-[88px] max-w-7xl items-center justify-between gap-4 border-b border-line px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center">
           <Image
             src="/logo.png"
             alt="Gala Drinks — Wholesale Drinks Supplier"
-            width={96}
-            height={60}
+            width={128}
+            height={80}
             priority
-            className="h-[56px] w-auto"
+            className="h-[72px] w-auto"
           />
         </Link>
 

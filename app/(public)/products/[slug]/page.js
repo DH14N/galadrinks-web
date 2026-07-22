@@ -53,7 +53,7 @@ export default async function ProductPage({ params }) {
     .slice(0, 4);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[110px] sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[130px] sm:px-6">
       {/* Breadcrumb */}
       <Reveal>
         <nav className="flex flex-wrap items-center gap-1.5 text-sm text-body">

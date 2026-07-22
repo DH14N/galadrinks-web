@@ -9,7 +9,7 @@ import Reveal from "@/components/Reveal";
 import CategoryTile from "@/components/CategoryTile";
 import ProductGrid from "@/components/ProductGrid";
 import PremiumButton from "@/components/PremiumButton";
-import { categories, getFeaturedProducts } from "@/lib/catalogue";
+import { categories, getFeaturedProducts, getShowcaseProducts } from "@/lib/catalogue";
 
 // Small helper for consistent section headings
 function SectionHeading({ eyebrow, title, sub }) {
@@ -28,10 +28,11 @@ function SectionHeading({ eyebrow, title, sub }) {
 
 export default function HomePage() {
   const featured = getFeaturedProducts();
+  const showcase = getShowcaseProducts();
 
   return (
     <>
-      <Hero />
+      <Hero showcase={showcase} />
 
       {/* ------------------------------------------ Three quick panels */}
       <section className="border-b border-line bg-paper-2">

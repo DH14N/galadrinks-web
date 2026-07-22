@@ -20,7 +20,7 @@ export default async function BrandPage({ params }) {
   const items = getProductsByBrand(slug);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[120px] sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[140px] sm:px-6">
       <Reveal>
         <nav className="flex items-center gap-1.5 text-sm text-body">
           <Link href="/" className="hover:text-gold">Home</Link>

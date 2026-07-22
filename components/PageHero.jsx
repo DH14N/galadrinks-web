@@ -3,7 +3,7 @@ import Reveal from "@/components/Reveal";
 // Simple heading band shared by the info pages (About, Services, etc.)
 export default function PageHero({ eyebrow, title, sub }) {
   return (
-    <div className="border-b border-line bg-paper-2 pt-[104px]">
+    <div className="border-b border-line bg-paper-2 pt-[124px]">
       <Reveal className="mx-auto max-w-7xl px-4 pb-12 pt-10 sm:px-6">
         <div className="text-[12px] font-semibold uppercase tracking-[0.25em] text-gold">
           {eyebrow}

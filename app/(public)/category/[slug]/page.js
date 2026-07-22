@@ -53,7 +53,7 @@ export default async function CategoryPage({ params, searchParams }) {
   if (selected.specs.length) pageParams.spec = selected.specs.join(",");
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[165px] sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 pb-24 pt-[185px] sm:px-6">
       {/* Heading — centred */}
       <Reveal className="text-center">
         <h1 className="font-display text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
