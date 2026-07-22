@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BadgePercent, History, Truck, ShieldCheck } from "lucide-react";
 import TradeLoginForm from "@/components/TradeLoginForm";
 import Reveal from "@/components/Reveal";
@@ -52,10 +53,13 @@ export default function TradeLoginPage() {
         <Reveal delay={0.1}>
           <div className="card mx-auto w-full max-w-md rounded-3xl p-8 shadow-[0_24px_60px_rgba(23,32,47,0.12)] sm:p-10">
             <div className="mb-8 text-center">
-              <div className="inline-flex items-baseline gap-1.5 font-display text-2xl font-bold tracking-tight">
-                <span className="text-ink">Gala</span>
-                <span className="text-gold">Drinks</span>
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Gala Drinks — Wholesale Drinks Supplier"
+                width={144}
+                height={90}
+                className="mx-auto h-[88px] w-auto"
+              />
               <h2 className="mt-4 font-display text-xl font-semibold text-ink">
                 Trade Login
               </h2>

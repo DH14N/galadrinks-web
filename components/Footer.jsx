@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { categories } from "@/lib/categories";
 
@@ -8,9 +9,15 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Brand */}
         <div>
-          <div className="flex items-baseline gap-1.5 font-display text-2xl font-bold tracking-tight">
-            <span className="text-white">Gala</span>
-            <span className="text-gold-light">Drinks</span>
+          {/* White tile so the dark logo reads on the navy footer */}
+          <div className="inline-flex rounded-2xl bg-white px-4 py-3">
+            <Image
+              src="/logo.png"
+              alt="Gala Drinks — Wholesale Drinks Supplier"
+              width={128}
+              height={80}
+              className="h-20 w-auto"
+            />
           </div>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
             Wholesale drinks, delivered with service you can trust. Supplying

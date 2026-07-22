@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { KeyRound } from "lucide-react";
 
 export const metadata = {
@@ -16,11 +17,15 @@ export default async function GatePage({ searchParams }) {
     <main className="flex min-h-screen items-center justify-center bg-navy px-4">
       <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-[0_30px_80px_rgba(0,0,0,0.4)] sm:p-10">
         <div className="text-center">
-          <div className="inline-flex items-baseline gap-1.5 font-display text-2xl font-bold tracking-tight">
-            <span className="text-ink">Gala</span>
-            <span className="text-gold">Drinks</span>
-          </div>
-          <p className="mt-3 text-sm text-body">
+          <Image
+            src="/logo.png"
+            alt="Gala Drinks — Wholesale Drinks Supplier"
+            width={176}
+            height={110}
+            priority
+            className="mx-auto h-28 w-auto"
+          />
+          <p className="mt-4 text-sm text-body">
             This site is in private preview. Enter the password to continue.
           </p>
         </div>

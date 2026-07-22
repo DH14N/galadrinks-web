@@ -29,6 +29,7 @@ export const metadata = {
     title: "Gala Drinks | Wholesale Drinks Supplier",
     description:
       "Wholesale drinks, delivered with service you can trust. Beers, spirits, wines and soft drinks for restaurants, bars and shops across the Midlands.",
+    images: [{ url: "/logo.png", width: 765, height: 480, alt: "Gala Drinks" }],
   },
 };
 

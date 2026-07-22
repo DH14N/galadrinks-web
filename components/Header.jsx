@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import {
   ChevronDown, Search, ShoppingBasket, Menu, X, UserRound, Phone,
@@ -72,10 +73,16 @@ export default function Header() {
       </div>
 
       <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-4 border-b border-line px-4 sm:px-6">
-        {/* Wordmark */}
-        <Link href="/" className="flex items-baseline gap-1.5 font-display text-2xl font-bold tracking-tight">
-          <span className="text-ink">Gala</span>
-          <span className="text-gold">Drinks</span>
+        {/* Logo */}
+        <Link href="/" className="flex shrink-0 items-center">
+          <Image
+            src="/logo.png"
+            alt="Gala Drinks — Wholesale Drinks Supplier"
+            width={96}
+            height={60}
+            priority
+            className="h-[56px] w-auto"
+          />
         </Link>
 
         {/* Desktop nav */}
