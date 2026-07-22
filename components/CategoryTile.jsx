@@ -35,8 +35,9 @@ export default function CategoryTile({ category, image }) {
       className="group card flex h-full flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-lg"
     >
       {image ? (
-        // Product photo sits on a cream tile so white bottle shots read
-        <span className="mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-line bg-paper-2 p-1.5">
+        // White tile so the product photo's white background blends in
+        // seamlessly (no visible edge), matching the hero showcase cards
+        <span className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-line bg-white p-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image}
