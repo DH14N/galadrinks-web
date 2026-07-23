@@ -5,11 +5,13 @@ import {
 } from "lucide-react";
 import Hero from "@/components/Hero";
 import MonthlyOffers from "@/components/MonthlyOffers";
+import BrandStrip from "@/components/BrandStrip";
 import Reveal from "@/components/Reveal";
 import CategoryTile from "@/components/CategoryTile";
 import ProductGrid from "@/components/ProductGrid";
 import PremiumButton from "@/components/PremiumButton";
 import { categories, getFeaturedProducts, getShowcaseProducts, getCategoryImages } from "@/lib/catalogue";
+import { getStockedBrands } from "@/lib/stockedBrands";
 
 // Small helper for consistent section headings
 function SectionHeading({ eyebrow, title, sub }) {
@@ -30,6 +32,7 @@ export default function HomePage() {
   const featured = getFeaturedProducts();
   const showcase = getShowcaseProducts();
   const categoryImages = getCategoryImages();
+  const stockedBrands = getStockedBrands();
 
   return (
     <>
@@ -248,6 +251,9 @@ export default function HomePage() {
           </Reveal>
         </div>
       </section>
+
+      {/* ------------------------------------------ Brands we stock */}
+      <BrandStrip brands={stockedBrands} />
 
       {/* ------------------------------------------ Contact CTA */}
       <section className="bg-navy py-20 text-white">
