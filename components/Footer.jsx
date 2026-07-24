@@ -30,8 +30,9 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               <Mail size={15} className="text-gold-light" /> sales@galadrinks.co.uk
             </div>
-            <div className="flex items-center gap-2.5">
-              <MapPin size={15} className="text-gold-light" /> Leicester, United Kingdom
+            <div className="flex items-start gap-2.5">
+              <MapPin size={15} className="mt-0.5 shrink-0 text-gold-light" />
+              <span>6 Vitruvius Way, Meridian Business Park, Leicester</span>
             </div>
           </div>
         </div>

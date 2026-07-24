@@ -45,6 +45,7 @@ const organizationJsonLd = {
     "Wholesale drinks supplier serving restaurants, bars and shops across Leicester and the Midlands.",
   address: {
     "@type": "PostalAddress",
+    streetAddress: "6 Vitruvius Way, Meridian Business Park",
     addressLocality: "Leicester",
     addressCountry: "GB",
   },
