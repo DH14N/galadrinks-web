@@ -16,6 +16,41 @@ export default function TradeLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  // Sends a "set a new password" email. Works from a customer number or
+  // an email address — the customer number is looked up on the server.
+  async function handleForgotPassword() {
+    setError("");
+    const entered = idOrEmail.trim();
+    if (!entered) {
+      setError("Enter your customer number or email first, then tap this again.");
+      return;
+    }
+
+    setResetting(true);
+    let email = entered;
+    if (!email.includes("@")) {
+      const res = await fetch("/api/customer-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_number: email }),
+      });
+      if (!res.ok) {
+        setResetting(false);
+        setError("Customer number not found. Please check and try again.");
+        return;
+      }
+      email = (await res.json()).email;
+    }
+
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetting(false);
+    setResetSent(true);
+  }
 
   async function handleSignIn(e) {
     e.preventDefault();
@@ -101,6 +136,24 @@ export default function TradeLoginForm() {
           {error}
         </p>
       )}
+
+      {resetSent && (
+        <p className="rounded-xl border border-gold/30 bg-gold-pale px-4 py-3 text-sm text-ink">
+          If that account exists, we’ve emailed a link to set a new password.
+          Check your inbox (and the spam folder).
+        </p>
+      )}
+
+      <div className="text-right">
+        <button
+          type="button"
+          onClick={handleForgotPassword}
+          disabled={resetting}
+          className="text-[13px] font-medium text-gold hover:underline disabled:opacity-50"
+        >
+          {resetting ? "Sending…" : "Forgotten your password?"}
+        </button>
+      </div>
 
       <button
         type="submit"
