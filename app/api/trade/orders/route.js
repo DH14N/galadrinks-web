@@ -45,6 +45,6 @@ export async function GET(request) {
         total_pence: lines.reduce((s, l) => s + l.qty * l.unit_price_pence, 0),
       };
     }),
-    customer: { number: customer.customer_number, name: customer.name },
+    customer: { number: customer.customer_number, name: customer.name, isAdmin: customer.is_admin },
   });
 }
