@@ -1,183 +1,245 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { Search, Download, FileText } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import AdminShell from "@/components/admin/AdminShell";
+
+const money = (p) => "£" + ((p || 0) / 100).toFixed(2);
+
+const STATUSES = ["pending", "confirmed", "delivered", "cancelled"];
+const statusStyle = {
+  pending: "bg-gold-pale text-gold",
+  confirmed: "bg-blue-50 text-blue-700",
+  delivered: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-700",
+};
 
 export default function AdminOrdersPage() {
-  const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
-  const [custById, setCustById] = useState({});
-  const [itemsByOrder, setItemsByOrder] = useState({});
-  const [error, setError] = useState('');
-  const [q, setQ] = useState(''); // search by customer name/number/order id
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(null);
+  const [saving, setSaving] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      setError('');
-      setLoading(true);
-
-      // ensure logged in
-      const { data: u } = await supabase.auth.getUser();
-      if (!u?.user) { window.location.href = '/login'; return; }
-
-      // latest 200 orders
-      const { data: ords, error: oErr } = await supabase
-        .from('orders')
-        .select('id, customer_id, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(200);
-
-      if (oErr) { setError(oErr.message); setLoading(false); return; }
-      setOrders(ords);
-
-      // customers for those orders
-      const custIds = Array.from(new Set(ords.map(o => o.customer_id)));
-      if (custIds.length) {
-        const { data: custs, error: cErr } = await supabase
-          .from('customers')
-          .select('id, customer_number, name')
-          .in('id', custIds);
-        if (cErr) { setError(cErr.message); setLoading(false); return; }
-        const map = {};
-        for (const c of custs) map[c.id] = c;
-        setCustById(map);
-      }
-
-      // items (with product info) for those orders
-      const orderIds = ords.map(o => o.id);
-      if (orderIds.length) {
-        const { data: items, error: iErr } = await supabase
-          .from('order_items')
-          .select('order_id, qty, unit_price_pence, products(name, sku)')
-          .in('order_id', orderIds)
-          .order('order_id');
-        if (iErr) { setError(iErr.message); setLoading(false); return; }
-
-        const byOrder = {};
-        for (const it of items) {
-          if (!byOrder[it.order_id]) byOrder[it.order_id] = [];
-          byOrder[it.order_id].push(it);
-        }
-        setItemsByOrder(byOrder);
-      }
-
-      setLoading(false);
-    })();
+  const token = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token;
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return orders;
-    return orders.filter(o => {
-      const c = custById[o.customer_id] || {};
-      return (
-        (o.id || '').toLowerCase().includes(term) ||
-        (c.customer_number || '').toLowerCase().includes(term) ||
-        (c.name || '').toLowerCase().includes(term)
-      );
-    });
-  }, [orders, custById, q]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    const t = await token();
+    if (!t) return;
 
-  const rowsForCsv = useMemo(() => {
-    const rows = [];
-    for (const o of filtered) {
-      const cust = custById[o.customer_id] || {};
-      const items = itemsByOrder[o.id] || [];
-      for (const it of items) {
-        rows.push({
-          order_id: o.id,
-          order_date: new Date(o.created_at).toISOString().slice(0, 10),
-          customer_number: cust.customer_number || '',
-          customer_name: cust.name || '',
-          sku: it.products?.sku || '',
-          product_name: it.products?.name || '',
-          qty: it.qty,
-          unit_price: (it.unit_price_pence / 100).toFixed(2),
-          line_total: ((it.qty * it.unit_price_pence) / 100).toFixed(2),
-          status: o.status,
-        });
-      }
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (search) params.set("q", search);
+
+    const res = await fetch(`/api/admin/orders?${params}`, {
+      headers: { Authorization: `Bearer ${t}` },
+    });
+    if (!res.ok) { setError("Could not load orders."); setLoading(false); return; }
+    const json = await res.json();
+    setOrders(json.orders || []);
+    setLoading(false);
+  }, [status, search, token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function changeStatus(orderId, newStatus) {
+    setSaving(orderId);
+    const t = await token();
+    const res = await fetch("/api/admin/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify({ order_id: orderId, status: newStatus }),
+    });
+    setSaving(null);
+    if (res.ok) {
+      setOrders((list) => list.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+    } else {
+      setError("Could not update that order.");
     }
-    return rows;
-  }, [filtered, custById, itemsByOrder]);
+  }
 
   function downloadCsv() {
-    const headers = ['order_id','order_date','customer_number','customer_name','sku','product_name','qty','unit_price','line_total','status'];
-    const lines = [headers.join(',')];
-    for (const r of rowsForCsv) {
-      lines.push(headers.map(h => {
-        const v = r[h] ?? '';
-        return /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g,'""')}"` : v;
-      }).join(','));
+    const rows = [["Order", "Date", "Customer", "Account", "Status", "Product", "Qty", "Unit price", "Line total"]];
+    for (const o of orders) {
+      for (const l of o.lines) {
+        rows.push([
+          o.id.slice(0, 8).toUpperCase(),
+          new Date(o.created_at).toLocaleDateString("en-GB"),
+          o.customer,
+          o.customer_number,
+          o.status,
+          l.name,
+          l.qty,
+          (l.unit_price_pence / 100).toFixed(2),
+          ((l.qty * l.unit_price_pence) / 100).toFixed(2),
+        ]);
+      }
     }
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'orders-export.csv'; a.click();
+    const csv = rows
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gala-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
     URL.revokeObjectURL(url);
   }
 
-  if (loading) return <main className="min-h-screen p-6">Loading…</main>;
-
   return (
-    <main className="min-h-screen p-6 bg-white text-black">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">All Orders (Admin)</h1>
-        <div className="flex gap-3">
+    <AdminShell
+      title="Orders"
+      subtitle="Every order placed through the website."
+      actions={
+        <button
+          onClick={downloadCsv}
+          disabled={!orders.length}
+          className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-medium text-ink hover:border-gold hover:text-gold disabled:opacity-40"
+        >
+          <Download size={16} /> Download CSV
+        </button>
+      }
+    >
+      {/* Filters */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <form
+          onSubmit={(e) => { e.preventDefault(); setSearch(query.trim()); }}
+          className="card flex flex-1 items-center gap-3 rounded-full px-5"
+        >
+          <Search size={16} className="shrink-0 text-gold" />
           <input
-            value={q}
-            onChange={e=>setQ(e.target.value)}
-            placeholder="Search order id / customer # / name"
-            className="border rounded-md px-3 py-2"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search customer, account number or order reference…"
+            className="w-full bg-transparent py-2.5 text-sm text-ink placeholder:text-body/50 focus:outline-none"
           />
-          <button onClick={downloadCsv} className="rounded-xl px-4 py-2 border">Download CSV</button>
-          <Link href="/trade/products" className="rounded-xl px-4 py-2 border">Products</Link>
+        </form>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setStatus("")}
+            className={!status
+              ? "rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-white"
+              : "rounded-full border border-line bg-white px-4 py-2 text-[13px] text-body hover:border-gold hover:text-gold"}
+          >
+            All
+          </button>
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatus(s)}
+              className={status === s
+                ? "rounded-full bg-ink px-4 py-2 text-[13px] font-semibold capitalize text-white"
+                : "rounded-full border border-line bg-white px-4 py-2 text-[13px] capitalize text-body hover:border-gold hover:text-gold"}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 
-      {error && <p className="text-red-600 mb-4">Error: {error}</p>}
+      {error && (
+        <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          {error}
+        </p>
+      )}
 
-      {filtered.length === 0 ? (
-        <p>No orders.</p>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(o => {
-            const cust = custById[o.customer_id] || {};
-            const items = itemsByOrder[o.id] || [];
-            const total = items.reduce((s, it) => s + it.qty * it.unit_price_pence, 0);
-            return (
-              <div key={o.id} className="rounded-2xl border p-4 bg-gray-50 shadow">
-                <div className="flex justify-between">
-                  <div>
-                    <div className="text-sm text-gray-500">Order</div>
-                    <div className="font-mono text-sm">{o.id}</div>
-                  </div>
-                  <div className="text-right text-sm">
-                    <div>{new Date(o.created_at).toLocaleString()}</div>
-                    <span className="ml-2 rounded-full px-2 py-1 border">{o.status}</span>
-                  </div>
-                </div>
+      {loading && <p className="py-16 text-center text-body">Loading orders…</p>}
 
-                <div className="mt-2 flex justify-between text-sm">
-                  <div className="text-gray-700">
-                    {cust.customer_number || '—'} — {cust.name || 'Unknown'}
-                  </div>
-                  <div className="font-semibold">
-                    Total £{(total / 100).toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="mt-3 flex gap-3">
-                  <Link href={`/admin/orders/${o.id}/invoice`} className="rounded-xl px-3 py-2 border bg-white">
-                    Invoice / Print
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+      {!loading && orders.length === 0 && (
+        <div className="card mt-6 rounded-3xl p-12 text-center">
+          <h2 className="font-display text-lg font-semibold text-ink">No orders found</h2>
+          <p className="mt-2 text-sm text-body">Try a different filter or search.</p>
         </div>
       )}
-    </main>
+
+      <div className="mt-6 space-y-4">
+        {orders.map((o) => (
+          <div key={o.id} className="card rounded-2xl p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="font-display text-base font-semibold text-ink">
+                  {o.customer}{" "}
+                  <span className="font-sans text-[12px] font-normal text-body">
+                    ({o.customer_number})
+                  </span>
+                </div>
+                <div className="mt-0.5 text-[12px] text-body">
+                  {new Date(o.created_at).toLocaleString("en-GB", {
+                    day: "numeric", month: "short", year: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })}
+                  {" · "}
+                  <span className="font-mono">{o.id.slice(0, 8).toUpperCase()}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={`rounded-full px-3 py-1 text-[12px] font-semibold capitalize ${statusStyle[o.status] || "bg-paper-2 text-body"}`}>
+                  {o.status}
+                </span>
+                <span className="font-display text-xl font-bold text-ink">
+                  {money(o.total_pence)}
+                </span>
+                <select
+                  value={o.status}
+                  disabled={saving === o.id}
+                  onChange={(e) => changeStatus(o.id, e.target.value)}
+                  className="rounded-full border border-line bg-white px-3 py-1.5 text-[13px] capitalize text-ink focus:border-gold focus:outline-none disabled:opacity-50"
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <Link
+                  href={`/admin/orders/${o.id}/invoice`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-3.5 py-1.5 text-[13px] text-ink hover:border-gold hover:text-gold"
+                >
+                  <FileText size={14} /> Invoice
+                </Link>
+                <button
+                  onClick={() => setOpen(open === o.id ? null : o.id)}
+                  className="text-[13px] font-medium text-gold hover:underline"
+                >
+                  {open === o.id ? "Hide items" : `${o.lines.length} item${o.lines.length === 1 ? "" : "s"}`}
+                </button>
+              </div>
+            </div>
+
+            {open === o.id && (
+              <ul className="mt-4 divide-y divide-line border-t border-line pt-2">
+                {o.lines.map((l, i) => (
+                  <li key={i} className="flex justify-between gap-4 py-2 text-sm">
+                    <span className="text-body">
+                      {l.qty} × {l.name}
+                      {l.pack_size ? ` (${l.pack_size})` : ""}
+                    </span>
+                    <span className="shrink-0 font-medium text-ink">
+                      {money(l.qty * l.unit_price_pence)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {o.notes && (
+              <p className="mt-3 rounded-xl bg-paper-2 px-4 py-2.5 text-[13px] text-body">
+                <span className="font-semibold text-ink">Note:</span> {o.notes}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </AdminShell>
   );
 }
