@@ -80,8 +80,8 @@ export default function Footer() {
           <ul className="mt-4 space-y-2.5 text-sm">
             <li><Link href="/trade-login" className="text-white/60 transition-colors hover:text-gold-light">Trade Login</Link></li>
             <li><Link href="/contact" className="text-white/60 transition-colors hover:text-gold-light">Apply for a Trade Account</Link></li>
-            <li><Link href="/cart" className="text-white/60 transition-colors hover:text-gold-light">Basket</Link></li>
-            <li><Link href="/orders" className="text-white/60 transition-colors hover:text-gold-light">Your Orders</Link></li>
+            <li><Link href="/trade/basket" className="text-white/60 transition-colors hover:text-gold-light">Basket</Link></li>
+            <li><Link href="/trade/orders" className="text-white/60 transition-colors hover:text-gold-light">Your Orders</Link></li>
           </ul>
           <p className="mt-6 rounded-xl border border-white/15 p-4 text-[12px] leading-relaxed text-white/60">
             Prices are only visible to approved trade customers. Log in to see
