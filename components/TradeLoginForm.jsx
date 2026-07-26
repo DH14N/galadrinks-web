@@ -39,7 +39,11 @@ export default function TradeLoginForm() {
       });
       if (!res.ok) {
         setResetting(false);
-        setError("Customer number not found. Please check and try again.");
+        setError(
+          res.status === 404
+            ? "Customer number not found. Please check and try again."
+            : "We can’t send a reset link right now. Please call 0116 289 0111."
+        );
         return;
       }
       email = (await res.json()).email;
@@ -67,7 +71,13 @@ export default function TradeLoginForm() {
       });
       if (!res.ok) {
         setLoading(false);
-        setError("Customer number not found. Please check and try again.");
+        // 404 = genuinely no such customer; anything else is our problem,
+        // so don't blame the customer's details for it
+        setError(
+          res.status === 404
+            ? "Customer number not found. Please check and try again."
+            : "We can’t sign you in right now. Please call 0116 289 0111."
+        );
         return;
       }
       const json = await res.json();
