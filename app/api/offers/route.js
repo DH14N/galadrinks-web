@@ -3,18 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { products } from "@/lib/catalogue";
 import { getFormat } from "@/lib/categories";
 
-// This month's offers live here on the server, so they are NEVER sent
-// to visitors who aren't logged in. Later we'll move this list into a
-// Supabase table so it can be managed from the admin area.
-// Each entry finds the first product whose name contains the keyword.
-const deals = [
-  { match: "cobra", deal: "Buy 5 cases, get 1 free" },
-  { match: "coca-cola", deal: "Money off every case" },
-  { match: "smirnoff red", deal: "Special price this month" },
-  { match: "kopparberg strawberry", deal: "Buy 3 cases, save more" },
-  { match: "red bull", deal: "Multi-buy deal on 4+ cases" },
-  { match: "moet", deal: "Summer special price" },
-];
+// This month's offers live on the server, so they are NEVER sent to
+// visitors who aren't logged in. The list itself is shared with the
+// trade offers page — edit it in lib/offers.js.
+import { MONTHLY_OFFERS as deals } from "@/lib/offers";
 
 function findByKeyword(keyword) {
   const k = keyword.toLowerCase();

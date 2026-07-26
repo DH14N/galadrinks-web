@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { ShoppingBasket, LogOut, Package, ClipboardList, Menu, X } from "lucide-react";
+import {
+  ShoppingBasket, LogOut, Package, ClipboardList, Menu, X,
+  BadgePercent, UserRound, ShieldCheck,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { basketCount } from "@/lib/basket";
 
@@ -36,7 +39,9 @@ export default function TradeHeader({ customer }) {
 
   const links = [
     { href: "/trade/products", label: "Products", icon: Package },
+    { href: "/trade/offers", label: "Monthly offers", icon: BadgePercent },
     { href: "/trade/orders", label: "Your orders", icon: ClipboardList },
+    { href: "/trade/account", label: "Account", icon: UserRound },
   ];
 
   const linkClass = (href) =>
@@ -90,6 +95,16 @@ export default function TradeHeader({ customer }) {
             )}
           </Link>
 
+          {customer?.isAdmin && (
+            <Link
+              href="/admin"
+              className="hidden items-center gap-2 rounded-full bg-gold-pale px-4 py-2 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-white lg:inline-flex"
+            >
+              <ShieldCheck size={15} />
+              Staff area
+            </Link>
+          )}
+
           <button
             onClick={signOut}
             className="hidden items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-gold hover:text-gold sm:inline-flex"
@@ -121,6 +136,12 @@ export default function TradeHeader({ customer }) {
               {label}
             </Link>
           ))}
+          {customer?.isAdmin && (
+            <Link href="/admin" className={`block ${linkClass("/admin")}`}>
+              <ShieldCheck size={16} />
+              Staff area
+            </Link>
+          )}
           <button
             onClick={signOut}
             className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-sm font-medium text-ink"
