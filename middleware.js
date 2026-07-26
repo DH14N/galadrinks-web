@@ -17,10 +17,15 @@ export function middleware(request) {
 
   const { pathname } = request.nextUrl;
 
-  // Always allow: the gate itself, Next.js assets, and static files
+  // Always allow: the gate itself, Next.js assets, and static files.
+  // /reset-password is allowed too: password-reset links carry their
+  // token after a "#", which a redirect to the gate would discard,
+  // silently breaking the reset. The page itself is useless without a
+  // valid emailed token, so letting it through is safe.
   if (
     pathname.startsWith("/gate") ||
     pathname.startsWith("/api/gate") ||
+    pathname.startsWith("/reset-password") ||
     pathname.startsWith("/_next") ||
     /\.(png|jpg|jpeg|svg|ico|webp|txt|xml)$/.test(pathname)
   ) {
