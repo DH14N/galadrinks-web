@@ -193,7 +193,7 @@ export default function Header() {
           {/* Basket */}
           <Link
             aria-label="Basket"
-            href="/cart"
+            href="/trade/basket"
             className="rounded-full p-2.5 text-ink/70 transition-colors hover:text-gold"
           >
             <ShoppingBasket size={20} />
