@@ -13,6 +13,7 @@
 // ---------------------------------------------------------------------------
 
 import fs from "node:fs";
+import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const APPLY = process.argv.includes("--apply");
@@ -48,10 +49,37 @@ if (exErr) {
 const bySlug = new Map(existing.filter((r) => r.slug).map((r) => [r.slug, r]));
 console.log(`Database currently: ${existing.length} rows (${bySlug.size} with a slug)`);
 
+// ---------------------------------------------------------------------------
+// Every product needs a unique SKU (the database requires one, and orders
+// record it). Roughly 60% of the shop export has none, and a few are
+// duplicated, so:
+//   - keep the real SKU where it exists and is unique
+//   - otherwise generate a stable one from the slug, e.g. GD-A1B2C3D4
+// Generated codes never change between imports, so they stay valid on
+// past orders.
+// ---------------------------------------------------------------------------
+const generatedSku = (slug) =>
+  "GD-" + crypto.createHash("sha1").update(slug).digest("hex").slice(0, 8).toUpperCase();
+
+const usedSkus = new Set();
+const skuFor = (p) => {
+  const real = (p.sku || "").trim();
+  if (real && !usedSkus.has(real)) {
+    usedSkus.add(real);
+    return real;
+  }
+  // Missing, or a duplicate of one already taken
+  let sku = generatedSku(p.slug);
+  let n = 2;
+  while (usedSkus.has(sku)) sku = `${generatedSku(p.slug)}-${n++}`;
+  usedSkus.add(sku);
+  return sku;
+};
+
 // Build the rows to write
 const rows = products.map((p) => ({
   slug: p.slug,
-  sku: p.sku || null,
+  sku: skuFor(p),
   name: p.name,
   description: p.description || null,
   category: p.category || null,       // legacy text column
