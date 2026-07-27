@@ -19,21 +19,34 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: 'Not configured' }), { status: 503 });
     }
 
-    const { customer_number } = await req.json();
-    if (!customer_number) {
+    const entered = String((await req.json()).customer_number ?? '').trim();
+    if (!entered) {
       return new Response(JSON.stringify({ error: 'customer_number required' }), { status: 400 });
     }
-    const { data, error } = await admin
-      .from('customers')
-      .select('contact_email')
-      .eq('customer_number', customer_number)
-      .limit(1)
-      .single();
 
-    if (error || !data) {
+    // Account references come from Sage and can mix letters and numbers
+    // (GAL001, abc12). Customers won't type the capitals the same way every
+    // time, so match without caring about case — but still exactly, so
+    // "GAL1" can never sign anyone in as "GAL10".
+    //
+    // % _ and * mean "anything" to the database, so they're escaped first;
+    // the result is then checked properly in code rather than trusted.
+    const pattern = entered.replace(/[\\%_*]/g, (c) => '\\' + c);
+
+    const { data } = await admin
+      .from('customers')
+      .select('customer_number, contact_email')
+      .ilike('customer_number', pattern)
+      .limit(5);
+
+    const match = (data || []).find(
+      (c) => (c.customer_number || '').trim().toLowerCase() === entered.toLowerCase()
+    );
+
+    if (!match?.contact_email) {
       return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
     }
-    return new Response(JSON.stringify({ email: data.contact_email }), { status: 200 });
+    return new Response(JSON.stringify({ email: match.contact_email }), { status: 200 });
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
   }

@@ -36,6 +36,9 @@ yarn-error.log*
 # shop exports — contain prices/costs, must never be committed
 products_export_*.csv
 
+# Sage 50 exports — real trade prices and customer data, never commit
+/sage/
+
 # vercel
 .vercel
 
