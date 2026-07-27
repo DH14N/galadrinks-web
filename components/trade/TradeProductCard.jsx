@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { Beer, Check, Plus, Minus, Phone } from "lucide-react";
 import { addToBasket } from "@/lib/basket";
-
-const money = (pence) => "£" + (pence / 100).toFixed(2);
+import { incVat, money } from "@/lib/vat";
 
 // A product as a signed-in customer sees it: their price, a quantity
 // box and an add-to-basket button.
@@ -67,7 +66,12 @@ export default function TradeProductCard({ product }) {
                 <span className="font-display text-2xl font-bold text-ink">
                   {money(product.price_pence)}
                 </span>
-                <span className="text-[12px] text-body">per case</span>
+                <span className="text-[12px] text-body">ex VAT</span>
+              </div>
+              <div className="mt-0.5 text-[12px] text-body">
+                {product.vat_rate === 0
+                  ? "Zero-rated for VAT"
+                  : `${money(incVat(product.price_pence, product.vat_rate))} inc VAT`}
               </div>
 
               <div className="mt-3 flex items-center gap-2">

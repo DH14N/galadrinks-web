@@ -9,6 +9,7 @@ import {
   orderConfirmationEmail,
   orderNotificationEmail,
 } from "@/lib/email";
+import { totalsFor } from "@/lib/vat";
 
 // ---------------------------------------------------------------------------
 // Places an order.
@@ -53,7 +54,7 @@ export async function POST(request) {
   // Only active products can be ordered
   const { data: products, error: prodError } = await admin
     .from("products")
-    .select("id, name, sku, pack_size, is_active")
+    .select("id, name, sku, pack_size, vat_rate, is_active")
     .in("id", productIds)
     .eq("is_active", true);
 
@@ -76,6 +77,7 @@ export async function POST(request) {
       product_id: product.id,
       qty: wanted.get(product.id),
       unit_price_pence: price,
+      vat_rate: product.vat_rate ?? 20,
       name: product.name,
       pack_size: product.pack_size,
     });
@@ -111,6 +113,7 @@ export async function POST(request) {
       product_id: l.product_id,
       qty: l.qty,
       unit_price_pence: l.unit_price_pence,
+      vat_rate: l.vat_rate,
     }))
   );
 
@@ -120,7 +123,8 @@ export async function POST(request) {
     return Response.json({ error: "Could not place the order." }, { status: 500 });
   }
 
-  const total = lines.reduce((sum, l) => sum + l.qty * l.unit_price_pence, 0);
+  const totals = totalsFor(lines);
+  const total = totals.gross;
   const orderRef = order.id.slice(0, 8).toUpperCase();
 
   // Tell the office, and confirm to the customer. Wrapped so a mail
@@ -131,6 +135,7 @@ export async function POST(request) {
       pack_size: l.pack_size,
       qty: l.qty,
       unit_price_pence: l.unit_price_pence,
+      vat_rate: l.vat_rate,
     }));
 
     const jobs = [
@@ -144,7 +149,7 @@ export async function POST(request) {
           customerEmail: customer.contact_email,
           orderRef,
           lines: emailLines,
-          total,
+          totals,
           notes,
         }),
       }),
@@ -159,7 +164,7 @@ export async function POST(request) {
             customerName: customer.name,
             orderRef,
             lines: emailLines,
-            total,
+            totals,
             notes,
           }),
         })
@@ -176,7 +181,8 @@ export async function POST(request) {
     order_id: order.id,
     placed_at: order.created_at,
     total_pence: total,
-    lines: lines.map(({ name, qty, unit_price_pence }) => ({ name, qty, unit_price_pence })),
+    totals,
+    lines: lines.map(({ name, qty, unit_price_pence, vat_rate }) => ({ name, qty, unit_price_pence, vat_rate })),
     rejected,
   });
 }

@@ -27,7 +27,7 @@ export async function GET(request) {
   let query = admin
     .from("products")
     .select(
-      "id, slug, name, brand, category_slug, pack_size, unit_size, case_size, abv, country, vessel, image_url, sku",
+      "id, slug, name, brand, category_slug, pack_size, unit_size, case_size, abv, country, vessel, image_url, sku, vat_rate",
       { count: "exact" }
     )
     .eq("is_active", true);

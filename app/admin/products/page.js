@@ -56,6 +56,25 @@ function ProductsInner() {
 
   useEffect(() => { load(); }, [load]);
 
+  async function saveVat(product, rate) {
+    const t = await token();
+    const res = await fetch("/api/admin/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      body: JSON.stringify({ product_id: product.id, vat_rate: Number(rate) }),
+    });
+    if (!res.ok) {
+      setError("Could not save that VAT rate.");
+      return;
+    }
+    const { product: updated } = await res.json();
+    setItems((list) =>
+      list.map((p) => (p.id === updated.id ? { ...p, vat_rate: updated.vat_rate } : p))
+    );
+    setSavedId(product.id);
+    setTimeout(() => setSavedId((s) => (s === product.id ? null : s)), 1500);
+  }
+
   async function savePrice(product) {
     const typed = drafts[product.id];
     if (typed === undefined) return;
@@ -88,7 +107,7 @@ function ProductsInner() {
   return (
     <AdminShell
       title="Products & prices"
-      subtitle="Set the base price every customer sees. Leave a price empty for “price on request”."
+      subtitle="Set the base price every customer sees (ex VAT) and its VAT rate. Leave a price empty for “price on request”."
     >
       {/* Controls */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -169,6 +188,19 @@ function ProductsInner() {
                       {p.sku ? ` · ${p.sku}` : ""}
                     </div>
                   </div>
+
+                  <label className="flex items-center gap-1.5 text-[12px] text-body">
+                    VAT
+                    <select
+                      value={p.vat_rate ?? 20}
+                      onChange={(e) => saveVat(p, e.target.value)}
+                      className="rounded-xl border border-line bg-paper-2 px-2 py-2 text-sm font-semibold text-ink focus:border-gold focus:outline-none"
+                    >
+                      <option value={20}>20%</option>
+                      <option value={5}>5%</option>
+                      <option value={0}>0%</option>
+                    </select>
+                  </label>
 
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-body">£</span>
