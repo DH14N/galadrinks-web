@@ -3,6 +3,12 @@ import {
   authErrorResponse,
   pricesForCustomer,
 } from "@/lib/tradeAuth";
+import {
+  sendEmail,
+  ORDERS_EMAIL,
+  orderConfirmationEmail,
+  orderNotificationEmail,
+} from "@/lib/email";
 
 // ---------------------------------------------------------------------------
 // Places an order.
@@ -47,7 +53,7 @@ export async function POST(request) {
   // Only active products can be ordered
   const { data: products, error: prodError } = await admin
     .from("products")
-    .select("id, name, sku, is_active")
+    .select("id, name, sku, pack_size, is_active")
     .in("id", productIds)
     .eq("is_active", true);
 
@@ -71,6 +77,7 @@ export async function POST(request) {
       qty: wanted.get(product.id),
       unit_price_pence: price,
       name: product.name,
+      pack_size: product.pack_size,
     });
   }
 
@@ -114,6 +121,55 @@ export async function POST(request) {
   }
 
   const total = lines.reduce((sum, l) => sum + l.qty * l.unit_price_pence, 0);
+  const orderRef = order.id.slice(0, 8).toUpperCase();
+
+  // Tell the office, and confirm to the customer. Wrapped so a mail
+  // problem can never lose an order that's already been placed.
+  try {
+    const emailLines = lines.map((l) => ({
+      name: l.name,
+      pack_size: l.pack_size,
+      qty: l.qty,
+      unit_price_pence: l.unit_price_pence,
+    }));
+
+    const jobs = [
+      sendEmail({
+        to: ORDERS_EMAIL,
+        subject: `New order ${orderRef} — ${customer.name} (${customer.customer_number})`,
+        replyTo: customer.contact_email || undefined,
+        html: orderNotificationEmail({
+          customerName: customer.name,
+          customerNumber: customer.customer_number,
+          customerEmail: customer.contact_email,
+          orderRef,
+          lines: emailLines,
+          total,
+          notes,
+        }),
+      }),
+    ];
+
+    if (customer.contact_email) {
+      jobs.push(
+        sendEmail({
+          to: customer.contact_email,
+          subject: `Your Gala Drinks order ${orderRef}`,
+          html: orderConfirmationEmail({
+            customerName: customer.name,
+            orderRef,
+            lines: emailLines,
+            total,
+            notes,
+          }),
+        })
+      );
+    }
+
+    await Promise.allSettled(jobs);
+  } catch (err) {
+    console.error("[checkout] order saved but email failed:", err.message);
+  }
 
   return Response.json({
     ok: true,
