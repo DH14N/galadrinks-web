@@ -26,7 +26,7 @@ export async function POST(request) {
 
   const { data: products, error: prodError } = await admin
     .from("products")
-    .select("id, slug, name, brand, pack_size, image_url, sku, is_active")
+    .select("id, slug, name, brand, pack_size, image_url, sku, vat_rate, is_active")
     .in("id", ids);
 
   if (prodError) {
@@ -43,6 +43,7 @@ export async function POST(request) {
     pack_size: p.pack_size,
     image_url: p.image_url,
     sku: p.sku,
+    vat_rate: p.vat_rate ?? 20,
     available: p.is_active,
     price_pence: priceMap.get(p.id) ?? null,
   }));

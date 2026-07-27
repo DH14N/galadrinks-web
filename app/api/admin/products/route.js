@@ -15,7 +15,7 @@ export async function GET(request) {
 
   let query = admin
     .from("products")
-    .select("id, slug, name, brand, category_slug, pack_size, sku, image_url, trade_price_pence, is_active", { count: "exact" })
+    .select("id, slug, name, brand, category_slug, pack_size, sku, image_url, trade_price_pence, vat_rate, is_active", { count: "exact" })
     .order("name", { ascending: true });
 
   if (category) query = query.eq("category_slug", category);
@@ -73,6 +73,15 @@ export async function PATCH(request) {
 
   if ("is_active" in body) patch.is_active = !!body.is_active;
 
+  // VAT rate as a whole percentage (20 = 20%, 0 = zero-rated)
+  if ("vat_rate" in body) {
+    const rate = Number(body.vat_rate);
+    if (!Number.isInteger(rate) || rate < 0 || rate > 100) {
+      return Response.json({ error: "VAT rate must be between 0 and 100." }, { status: 400 });
+    }
+    patch.vat_rate = rate;
+  }
+
   if (!Object.keys(patch).length) {
     return Response.json({ error: "Nothing to change." }, { status: 400 });
   }
@@ -81,7 +90,7 @@ export async function PATCH(request) {
     .from("products")
     .update(patch)
     .eq("id", id)
-    .select("id, name, trade_price_pence, is_active")
+    .select("id, name, trade_price_pence, vat_rate, is_active")
     .single();
 
   if (updateError) {

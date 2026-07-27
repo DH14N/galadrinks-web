@@ -9,8 +9,7 @@ import TradeHeader from "@/components/trade/TradeHeader";
 import {
   getBasket, setQty, removeFromBasket, clearBasket,
 } from "@/lib/basket";
-
-const money = (pence) => "£" + (pence / 100).toFixed(2);
+import { totalsFor, money } from "@/lib/vat";
 
 export default function BasketPage() {
   const router = useRouter();
@@ -67,8 +66,12 @@ export default function BasketPage() {
   }
 
   const orderable = lines.filter((l) => l.price_pence != null && l.available);
-  const subtotal = orderable.reduce(
-    (sum, l) => sum + (quantities[l.id] || 1) * l.price_pence, 0
+  const totals = totalsFor(
+    orderable.map((l) => ({
+      qty: quantities[l.id] || 1,
+      unit_price_pence: l.price_pence,
+      vat_rate: l.vat_rate,
+    }))
   );
 
   async function placeOrder() {
@@ -116,11 +119,21 @@ export default function BasketPage() {
             confirm delivery.
           </p>
           <div className="card mt-8 rounded-2xl p-6 text-left">
-            <div className="flex justify-between border-b border-line pb-3 text-sm">
-              <span className="text-body">Order total</span>
-              <span className="font-display text-lg font-bold text-ink">
-                {money(placed.total_pence)}
-              </span>
+            <div className="space-y-1.5 border-b border-line pb-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-body">Subtotal (ex VAT)</span>
+                <span className="text-ink">{money(placed.totals?.net ?? placed.total_pence)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-body">VAT</span>
+                <span className="text-ink">{money(placed.totals?.vat ?? 0)}</span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="font-semibold text-ink">Order total</span>
+                <span className="font-display text-lg font-bold text-ink">
+                  {money(placed.total_pence)}
+                </span>
+              </div>
             </div>
             <ul className="mt-3 space-y-2 text-sm">
               {placed.lines.map((l, i) => (
@@ -228,7 +241,7 @@ export default function BasketPage() {
                             </button>
                           </div>
                           <span className="text-[13px] text-body">
-                            {money(line.price_pence)} each
+                            {money(line.price_pence)} each ex VAT
                           </span>
                           <span className="font-display text-base font-bold text-ink">
                             {money(qty * line.price_pence)}
@@ -254,18 +267,27 @@ export default function BasketPage() {
               <div className="card rounded-2xl p-6">
                 <h2 className="font-display text-lg font-semibold text-ink">Order summary</h2>
 
-                <div className="mt-4 flex justify-between border-b border-line pb-4 text-sm">
-                  <span className="text-body">
-                    {orderable.length} {orderable.length === 1 ? "item" : "items"}
-                  </span>
-                  <span className="font-display text-xl font-bold text-ink">
-                    {money(subtotal)}
-                  </span>
+                <div className="mt-4 space-y-2 border-b border-line pb-4 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-body">
+                      Subtotal ({orderable.length} {orderable.length === 1 ? "item" : "items"})
+                    </span>
+                    <span className="font-medium text-ink">{money(totals.net)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-body">VAT</span>
+                    <span className="font-medium text-ink">{money(totals.vat)}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between pt-1">
+                    <span className="font-semibold text-ink">Total</span>
+                    <span className="font-display text-xl font-bold text-ink">
+                      {money(totals.gross)}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="mt-3 text-[12px] leading-relaxed text-body">
-                  Prices exclude VAT where applicable. We’ll confirm your
-                  delivery day when we process the order.
+                  We’ll confirm your delivery day when we process the order.
                 </p>
 
                 <label className="mt-5 block text-[12px] font-semibold uppercase tracking-[0.15em] text-body">

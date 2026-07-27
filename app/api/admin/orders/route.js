@@ -1,4 +1,5 @@
 import { requireAdmin, authErrorResponse } from "@/lib/tradeAuth";
+import { totalsFor } from "@/lib/vat";
 
 const VALID_STATUS = ["pending", "confirmed", "delivered", "cancelled"];
 
@@ -41,7 +42,7 @@ export async function GET(request) {
   if (rows.length) {
     const { data: items } = await admin
       .from("order_items")
-      .select("order_id, qty, unit_price_pence, products(name, pack_size)")
+      .select("order_id, qty, unit_price_pence, vat_rate, products(name, pack_size)")
       .in("order_id", rows.map((o) => o.id));
 
     const byOrder = new Map();
@@ -52,6 +53,7 @@ export async function GET(request) {
         pack_size: i.products?.pack_size || null,
         qty: i.qty,
         unit_price_pence: i.unit_price_pence,
+        vat_rate: i.vat_rate ?? 20,
       });
     }
 
@@ -66,7 +68,8 @@ export async function GET(request) {
         customer: o.customers?.name || "—",
         customer_number: o.customers?.customer_number || "",
         lines,
-        total_pence: lines.reduce((s, l) => s + l.qty * l.unit_price_pence, 0),
+        totals: totalsFor(lines),
+        total_pence: totalsFor(lines).gross,
       };
     });
   }

@@ -1,4 +1,5 @@
 import { getCustomerFromRequest, authErrorResponse } from "@/lib/tradeAuth";
+import { totalsFor } from "@/lib/vat";
 
 // A customer's own past orders. The customer is taken from the login
 // token, so nobody can request someone else's order history.
@@ -21,7 +22,7 @@ export async function GET(request) {
 
   const { data: items } = await admin
     .from("order_items")
-    .select("order_id, qty, unit_price_pence, products(name, pack_size, image_url)")
+    .select("order_id, qty, unit_price_pence, vat_rate, products(name, pack_size, image_url)")
     .in("order_id", orders.map((o) => o.id));
 
   const byOrder = new Map();
@@ -33,6 +34,7 @@ export async function GET(request) {
       image_url: item.products?.image_url || null,
       qty: item.qty,
       unit_price_pence: item.unit_price_pence,
+      vat_rate: item.vat_rate ?? 20,
     });
   }
 
@@ -42,7 +44,8 @@ export async function GET(request) {
       return {
         ...o,
         lines,
-        total_pence: lines.reduce((s, l) => s + l.qty * l.unit_price_pence, 0),
+        totals: totalsFor(lines),
+        total_pence: totalsFor(lines).gross,
       };
     }),
     customer: { number: customer.customer_number, name: customer.name, isAdmin: customer.is_admin },
