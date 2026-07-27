@@ -33,6 +33,7 @@ export default function TradeHeader({ customer }) {
   useEffect(() => setOpen(false), [pathname]);
 
   async function signOut() {
+    sessionStorage.removeItem("gala_admin_ok");
     await supabase.auth.signOut();
     router.replace("/trade-login");
   }

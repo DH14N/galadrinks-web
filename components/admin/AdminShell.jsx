@@ -15,32 +15,61 @@ import { supabase } from "@/lib/supabase";
 // The real protection is on the server — every admin API checks the
 // login token itself. This is just so non-admins see a clear message
 // instead of an empty screen.
+// Remembering the check for this browser tab keeps navigation instant.
+// It's only about what we show — every admin API still verifies the
+// login token itself, so a faked value here gains nothing.
+const CACHE_KEY = "gala_admin_ok";
+
+function readCache() {
+  if (typeof window === "undefined") return null;
+  try {
+    return JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
 export default function AdminShell({ title, subtitle, children, actions }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [state, setState] = useState("checking"); // checking | ok | denied
-  const [me, setMe] = useState(null);
+
+  // Start from what we already know, so pages render immediately
+  const cached = typeof window !== "undefined" ? readCache() : null;
+  const [state, setState] = useState(cached ? "ok" : "checking");
+  const [me, setMe] = useState(cached?.email || null);
 
   const check = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     const token = data?.session?.access_token;
     if (!token) { router.replace("/trade-login"); return; }
 
-    const res = await fetch("/api/admin/overview", {
+    const res = await fetch("/api/admin/me", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.status === 401) { router.replace("/trade-login"); return; }
-    if (res.status === 403) { setState("denied"); return; }
-    setState("ok");
 
-    // Who am I? (for the sidebar)
-    const { data: userData } = await supabase.auth.getUser();
-    setMe(userData?.user?.email || null);
+    if (res.status === 401) {
+      sessionStorage.removeItem(CACHE_KEY);
+      router.replace("/trade-login");
+      return;
+    }
+    if (res.status === 403) {
+      sessionStorage.removeItem(CACHE_KEY);
+      setState("denied");
+      return;
+    }
+
+    const who = await res.json();
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ email: who.email }));
+    setMe(who.email || null);
+    setState("ok");
   }, [router]);
 
+  // Re-verify once per page load, but never block on it if we already
+  // know the answer from this tab
   useEffect(() => { check(); }, [check]);
 
   async function signOut() {
+    sessionStorage.removeItem(CACHE_KEY);
     await supabase.auth.signOut();
     router.replace("/trade-login");
   }
