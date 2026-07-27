@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdminShell from "@/components/admin/AdminShell";
+import EmailStatus from "@/components/admin/EmailStatus";
 import {
   Package, Users, ClipboardList, Tag, AlertCircle, ArrowRight,
 } from "lucide-react";
@@ -56,6 +57,8 @@ export default function AdminDashboard() {
           </Link>
         ))}
       </div>
+
+      <EmailStatus />
 
       {(c?.unpriced ?? 0) > 0 && (
         <div className="card mt-5 flex items-start gap-3 rounded-2xl border-gold/40 bg-gold-pale/40 p-5">
