@@ -6,35 +6,32 @@ export async function GET(request) {
   const { admin, error } = await requireAdmin(request);
   if (error) return authErrorResponse(error);
 
-  const counts = {};
+  // All of these are independent, so run them at the same time rather
+  // than waiting for each in turn (this page was taking ~10s).
+  const [
+    productsRes, unpricedRes, customersRes, pendingRes, specialRes, ordersRes,
+  ] = await Promise.all([
+    admin.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
+    admin.from("products").select("*", { count: "exact", head: true })
+      .eq("is_active", true).is("trade_price_pence", null),
+    admin.from("customers").select("*", { count: "exact", head: true }).eq("is_active", true),
+    admin.from("orders").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    admin.from("customer_prices").select("*", { count: "exact", head: true }),
+    admin.from("orders")
+      .select("id, status, created_at, customers(name, customer_number)")
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
 
-  const { count: products } = await admin
-    .from("products").select("*", { count: "exact", head: true }).eq("is_active", true);
-  counts.products = products ?? 0;
+  const counts = {
+    products: productsRes.count ?? 0,
+    unpriced: unpricedRes.count ?? 0,
+    customers: customersRes.count ?? 0,
+    pendingOrders: pendingRes.count ?? 0,
+    specialPrices: specialRes.count ?? 0,
+  };
 
-  const { count: unpriced } = await admin
-    .from("products").select("*", { count: "exact", head: true })
-    .eq("is_active", true).is("trade_price_pence", null);
-  counts.unpriced = unpriced ?? 0;
-
-  const { count: customers } = await admin
-    .from("customers").select("*", { count: "exact", head: true }).eq("is_active", true);
-  counts.customers = customers ?? 0;
-
-  const { count: pending } = await admin
-    .from("orders").select("*", { count: "exact", head: true }).eq("status", "pending");
-  counts.pendingOrders = pending ?? 0;
-
-  const { count: specialPrices } = await admin
-    .from("customer_prices").select("*", { count: "exact", head: true });
-  counts.specialPrices = specialPrices ?? 0;
-
-  // The five most recent orders, with what they're worth
-  const { data: orders } = await admin
-    .from("orders")
-    .select("id, status, created_at, customers(name, customer_number)")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const orders = ordersRes.data;
 
   let recent = [];
   if (orders?.length) {
