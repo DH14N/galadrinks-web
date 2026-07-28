@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, ClipboardList, Package, Users, LogOut, ShieldAlert, ExternalLink,
+  PoundSterling,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -109,6 +110,7 @@ export default function AdminShell({ title, subtitle, children, actions }) {
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/orders", label: "Orders", icon: ClipboardList },
     { href: "/admin/products", label: "Products & prices", icon: Package },
+    { href: "/admin/sage", label: "Sage prices", icon: PoundSterling },
     { href: "/admin/customers", label: "Customers", icon: Users },
   ];
 
